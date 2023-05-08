@@ -5,6 +5,7 @@ import xlrd
 import xlwt
 from bs4 import BeautifulSoup
 import time
+from openpyxl import load_workbook
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--login_auto')
@@ -23,7 +24,7 @@ def get_inventory_data(goods_no):
         rep = requests.get(url, cookies=cookie)
         soup = BeautifulSoup(rep.text, 'lxml')
     except Exception as e:
-        sys.exit("登录异常，请重新设置登录参数")
+        assert Exception("登录异常，请重新设置登录参数")
 
     all_inventory = soup.select(".div_table_float_reg")
 
@@ -53,6 +54,33 @@ def get_inventory_data(goods_no):
                 inventory_data['ctry'] = ctry.string
 
     return inventory_data
+
+
+def main1():
+    while True:
+        try:
+            filename = "D:/netcomponents/NXP.xlsx"
+            wb = load_workbook(filename)  # 获取已存在的工作簿
+            ws = wb.active  # 获取工作表
+            nrows = ws.max_row
+            for i in range(2, nrows+1):
+                print(i, ws.cell(i, 2).value)
+                if ws.cell(i, 13).value:
+                    print(i, "已执行，跳过")
+                    if i == nrows:
+                        print("执行完毕")
+                        sys.exit()
+                    continue
+                inventory_data = get_inventory_data(ws.cell(i, 2).value)
+                ws.cell(i, 12, inventory_data['ctry'])
+                ws.cell(i, 13, inventory_data['qty'])
+                ws.cell(i, 14, inventory_data['dc'])
+                wb.save(filename)
+                if i == nrows:
+                    print("执行完毕")
+                    sys.exit()
+        except Exception as e:
+            print("执行异常", e)
 
 
 def main():
@@ -91,4 +119,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    main1()
